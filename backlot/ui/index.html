@@ -1,26 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Backlot — Library</title>
+<title>AI動画ハブ — Backlot</title>
 <link rel="stylesheet" href="/ui/board.css">
+<link rel="stylesheet" href="/ui/library.css">
+<link rel="icon" href="data:,">
 </head>
-<body>
+<body class="hub">
 <div class="wrap">
-  <header class="slate">
-    <div class="clapper"></div>
-    <div>
-      <span class="wordmark">Backlot</span>
-      <h1>Library</h1>
+  <header class="slate hub-head">
+    <div class="hub-brand">
+      <div class="clapper"></div>
+      <div>
+        <span class="wordmark">Backlot</span>
+        <h1>AI動画ハブ</h1>
+      </div>
     </div>
-    <span class="chip" id="count"></span>
-    <div class="spacer"></div>
-    <span class="live idle" id="liveBadge"><span class="dot"></span><span id="liveText">IDLE</span></span>
+    <p class="hub-say">AI に頼んで作った動画が並ぶ所</p>
+    <div class="hub-stat">
+      <span class="hub-pill" id="liveBadge"><i></i><span id="liveText">待機</span></span>
+      <span class="hub-pill hub-mono" id="count"></span>
+    </div>
+    <div class="hub-tools" id="tools">
+      <button class="hub-btn" type="button" id="helpBtn">使い方</button>
+    </div>
   </header>
-  <div class="lib-grid" id="grid"></div>
-  <p class="hint" id="empty" style="display:none">No projects yet — run a production and it will appear here.</p>
+  <main id="app" aria-live="polite"></main>
+  <footer class="hub-foot">制作は Mac のフォルダで、AI に頼んで行います。この画面は見るだけです。</footer>
 </div>
+<dialog id="help" aria-labelledby="helpTitle">
+  <div class="hub-dh"><h2 id="helpTitle">使い方</h2><button class="hub-btn" type="button" id="helpClose">閉じる</button></div>
+  <ul class="hub-help">
+    <li><b>作る</b> Mac の OpenMontage のフォルダで、Claude Code か Codex に「〜の動画を作って」と頼みます。</li>
+    <li><b>見る</b> 制作が始まると、ここに自動で並びます。開き直す必要はありません。</li>
+    <li><b>開く</b> カードを押すと、その動画の制作の板(台本・場面・素材・書き出し)が開きます。</li>
+    <li><b>待機 / 制作中</b> 上の札で、いま AI が動いているかが分かります。</li>
+    <li><b>この画面からは作りません</b> 押せるのは「開く」と「写す」だけです。</li>
+  </ul>
+</dialog>
+<div id="toast" class="hub-toast" role="status" aria-live="polite"></div>
 <script type="module" src="/ui/library.js"></script>
 </body>
 </html>

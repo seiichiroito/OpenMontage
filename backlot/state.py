@@ -680,6 +680,10 @@ def summarize_project(project_dir: Path) -> dict[str, Any]:
         "completed_count": len(done),
         "render_count": len(state["media"]["renders"]),
         "scene_count": len((state["storyboard"] or {}).get("scenes", [])),
+        # Library shelf (fork): date, length and stage count for each card.
+        "created_at": state.get("created_at"),
+        "duration_seconds": (state["storyboard"] or {}).get("total_duration_seconds"),
+        "stage_count": len([s for s in state["stages"] if not s.get("undeclared")]),
     }
 
 
