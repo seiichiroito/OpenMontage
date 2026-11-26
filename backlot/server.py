@@ -172,6 +172,11 @@ def create_app() -> FastAPI:
     async def health() -> dict:
         return {"ok": True, "app": "backlot"}
 
+    @app.get("/api/info")
+    async def info() -> dict:
+        # Library guide (fork): the folder to open, with the home dir as "~".
+        return {"repo_dir": _display_path(REPO_ROOT)}
+
     @app.get("/api/projects")
     async def projects() -> list:
         return await asyncio.to_thread(_cached_summaries)
@@ -288,7 +293,7 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     async def library_page() -> HTMLResponse:
-        return _ui_html("index.html", ("board.css", "library.js"))
+        return _ui_html("index.html", ("board.css", "library.css", "library.js"))
 
     if UI_DIR.is_dir():
         app.mount("/ui", StaticFiles(directory=UI_DIR), name="ui")
@@ -310,6 +315,16 @@ def create_app() -> FastAPI:
         TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"], www_redirect=False,
     )
     return app
+
+
+def _display_path(path: Path) -> str:
+    """Path for display: the user's home folder is shown as "~"."""
+    try:
+        home = Path.home().resolve()
+        rel = path.resolve().relative_to(home)
+        return "~" if str(rel) == "." else "~/" + rel.as_posix()
+    except (ValueError, RuntimeError, OSError):
+        return path.name
 
 
 def _safe_project_dir(project_id: str) -> Path:

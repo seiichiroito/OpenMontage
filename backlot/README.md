@@ -11,6 +11,11 @@ python -m backlot open                # library view (all projects)
 python -m backlot serve --port 4750   # run the server in the foreground
 ```
 
+The library page (`/`) is the Japanese "AI動画ハブ" top page in this fork:
+a first-video guide with copyable prompts when there are no projects, and a
+shelf of projects (newest first, filter and sort) once there are. See
+[`USAGE.md`](USAGE.md) (Japanese).
+
 Backlot binds to `127.0.0.1` and accepts HTTP requests only for `127.0.0.1`
 or `localhost`, on the selected port. Other `Host` headers receive HTTP 400
 to protect local project data from DNS rebinding.
