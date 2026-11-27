@@ -1,7 +1,7 @@
 import { el, getJSON, subscribe, thumbURL } from "/ui/lib.js";
 import {
   EXAMPLES, LENGTHS, MOODS, buildAsk, filterSort, fmtDate, fmtLength, fmtTotal,
-  liveState, madeAt, progress, totals,
+  hasContent, inlineParts, liveState, madeAt, parseDoc, progress, totals,
 } from "/ui/library-model.js";
 
 const app = document.getElementById("app");
@@ -40,8 +40,38 @@ document.getElementById("tools").append(renderThemeToggle());
 
 // ---- 使い方 -----------------------------------------------------------
 const help = document.getElementById("help");
-document.getElementById("helpBtn").addEventListener("click", () => help.showModal());
+document.getElementById("helpBtn").addEventListener("click", () => {
+  help.showModal();
+  loadUsage();
+});
 document.getElementById("helpClose").addEventListener("click", () => help.close());
+
+// 開いたら backlot/USAGE.md の全文に差し替える。読めないときは短い案内のまま。
+let usageLoaded = false;
+const spans = (text) => inlineParts(text).map((s) => (s.kind === "text" ? s.text : el(s.kind, {}, s.text)));
+function docBlock(b) {
+  if (b.type === "h") return el(b.level <= 2 ? "h3" : "h4", {}, ...spans(b.text));
+  if (b.type === "p") return el("p", {}, ...spans(b.text));
+  if (b.type === "list") {
+    return el(b.ordered ? "ol" : "ul", {},
+      ...b.items.map((it) => el("li", { class: it.depth ? "sub" : null }, ...spans(it.text))));
+  }
+  const [head = [], ...rows] = b.rows;
+  return el("div", { class: "hub-doc-table" }, el("table", {},
+    el("thead", {}, el("tr", {}, ...head.map((c) => el("th", {}, ...spans(c))))),
+    el("tbody", {}, ...rows.map((r) => el("tr", {}, ...r.map((c) => el("td", {}, ...spans(c))))))));
+}
+async function loadUsage() {
+  if (usageLoaded) return;
+  try {
+    const res = await fetch("/usage.md");
+    if (!res.ok) return;
+    const blocks = parseDoc(await res.text()).filter((b) => !(b.type === "h" && b.level === 1));
+    if (!blocks.length) return;
+    help.querySelector(".hub-help").replaceWith(el("div", { class: "hub-doc" }, ...blocks.map(docBlock)));
+    usageLoaded = true;
+  } catch { /* older server: keep the short guide */ }
+}
 
 // ---- 写す ---------------------------------------------------------------
 let toastTimer = null;
@@ -244,7 +274,7 @@ function renderHeader() {
 }
 
 async function render() {
-  projects = await getJSON("/api/projects");
+  projects = (await getJSON("/api/projects")).filter(hasContent);
   renderHeader();
   // Typing in the builder must not be lost to a live refresh.
   if (app.contains(document.activeElement) && document.activeElement.tagName === "INPUT") return;

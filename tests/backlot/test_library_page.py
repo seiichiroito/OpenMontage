@@ -35,6 +35,15 @@ def test_display_path(tmp_path, monkeypatch):
     assert server_mod._display_path(Path("/opt/elsewhere/OpenMontage")) == "OpenMontage"
 
 
+def test_usage_doc_is_served(client):  # noqa: F811
+    res = client.get("/usage.md")
+    assert res.status_code == 200
+    assert res.headers["content-type"].startswith("text/markdown")
+    body = res.text
+    for word in (".env", "projects/", "renders/", "確認待ち"):
+        assert word in body
+
+
 def test_library_page_is_japanese(client):  # noqa: F811
     html = client.get("/").text
     assert 'lang="ja"' in html
