@@ -113,3 +113,57 @@ export function buildAsk({ what = "", len = "30 秒", mood = "静かな音楽で
   const topic = String(what).trim().slice(0, 40) || "近所の坂道の四季";
   return `${mood}、${topic}を見せる ${len}の動画を作って`;
 }
+
+// 使い方(backlot/USAGE.md)を画面に出すための小さな読み取り。
+// 見出し・段落・箇条・番号・表と、**太字**・`コード` だけ。HTML にはせず、文字のまま渡す。
+export function parseDoc(md) {
+  const blocks = [];
+  const lines = String(md ?? "").replace(/\r/g, "").split("\n");
+  let list = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) { list = null; continue; }
+    let m = line.match(/^(#{1,6})\s+(.*)$/);
+    if (m) { list = null; blocks.push({ type: "h", level: m[1].length, text: m[2].trim() }); continue; }
+    if (line.trim().startsWith("|")) {
+      const rows = [];
+      for (; i < lines.length && lines[i].trim().startsWith("|"); i++) {
+        const cells = lines[i].trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+        if (!cells.every((c) => /^:?-+:?$/.test(c))) rows.push(cells);
+      }
+      i--; list = null;
+      blocks.push({ type: "table", rows });
+      continue;
+    }
+    m = line.match(/^(\s*)(?:[-*]|(\d+)\.)\s+(.*)$/);
+    if (m) {
+      const depth = Math.floor(m[1].length / 2);
+      const ordered = Boolean(m[2]);
+      if (!list || (depth === 0 && list.ordered !== ordered)) {
+        list = { type: "list", ordered, items: [] };
+        blocks.push(list);
+      }
+      list.items.push({ depth, text: m[3].trim() });
+      continue;
+    }
+    const last = blocks[blocks.length - 1];
+    if (!list && last && last.type === "p") last.text += line.trim();
+    else { list = null; blocks.push({ type: "p", text: line.trim() }); }
+  }
+  return blocks;
+}
+
+// "**完成** は `renders/`" → [{kind:"b"}, {kind:"text"}, {kind:"code"}]
+export function inlineParts(text) {
+  const out = [];
+  const re = /\*\*(.+?)\*\*|`([^`]+)`/g;
+  let last = 0;
+  let m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push({ kind: "text", text: text.slice(last, m.index) });
+    out.push(m[1] !== undefined ? { kind: "b", text: m[1] } : { kind: "code", text: m[2] });
+    last = re.lastIndex;
+  }
+  if (last < text.length) out.push({ kind: "text", text: text.slice(last) });
+  return out;
+}

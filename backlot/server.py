@@ -16,12 +16,14 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from backlot.state import PROJECTS_DIR, REPO_ROOT, list_projects, load_board_state, summarize_project
 
 UI_DIR = Path(__file__).resolve().parent / "ui"
+# Library guide (fork): shown in full in the 使い方 dialog.
+USAGE_PATH = Path(__file__).resolve().parent / "USAGE.md"
 THUMB_CACHE_DIR = REPO_ROOT / ".backlot" / "thumbs"
 THUMB_WIDTHS = (320, 640, 960)
 
@@ -176,6 +178,13 @@ def create_app() -> FastAPI:
     async def info() -> dict:
         # Library guide (fork): the folder to open, with the home dir as "~".
         return {"repo_dir": _display_path(REPO_ROOT)}
+
+    @app.get("/usage.md")
+    async def usage_doc() -> PlainTextResponse:
+        # Library guide (fork): backlot/USAGE.md, read as text by the 使い方 dialog.
+        if not USAGE_PATH.is_file():
+            raise HTTPException(status_code=404, detail="usage not found")
+        return PlainTextResponse(USAGE_PATH.read_text(encoding="utf-8"), media_type="text/markdown; charset=utf-8")
 
     @app.get("/api/projects")
     async def projects() -> list:

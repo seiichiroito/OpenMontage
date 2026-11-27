@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  buildAsk, filterSort, fmtDate, fmtLength, fmtTotal, isDone, liveState, progress, stageLabel, totals,
+  buildAsk, filterSort, fmtDate, fmtLength, fmtTotal, inlineParts, isDone, liveState, parseDoc, progress, stageLabel, totals,
 } from "../../backlot/ui/library-model.js";
 
 const st = (pairs) => pairs.map(([name, status]) => ({ name, status }));
@@ -57,4 +57,19 @@ test("しぼる・並べる・数字", () => {
 test("頼み方を組み立てる", () => {
   assert.equal(buildAsk({ what: "  港の朝  ", len: "1 分", mood: "明るい調子で" }), "明るい調子で、港の朝を見せる 1 分の動画を作って");
   assert.equal(buildAsk({}), "静かな音楽で、近所の坂道の四季を見せる 30 秒の動画を作って");
+});
+
+test("使い方の文書を読み取る(見出し・箇条・番号・表・段落)", () => {
+  const md = "# 題\n\n## 要るキー\n\n- `.env` に書きます。\n  - 下の段\n1. 開く\n2. 頼む\n\n| キー | 使い道 |\n|---|---|\n| `FAL_KEY` | 画像 |\n\n一行目\n二行目\n";
+  assert.deepEqual(parseDoc(md), [
+    { type: "h", level: 1, text: "題" },
+    { type: "h", level: 2, text: "要るキー" },
+    { type: "list", ordered: false, items: [{ depth: 0, text: "`.env` に書きます。" }, { depth: 1, text: "下の段" }] },
+    { type: "list", ordered: true, items: [{ depth: 0, text: "開く" }, { depth: 0, text: "頼む" }] },
+    { type: "table", rows: [["キー", "使い道"], ["`FAL_KEY`", "画像"]] },
+    { type: "p", text: "一行目二行目" },
+  ]);
+  assert.deepEqual(inlineParts("**待機**: `<b>` のまま"), [
+    { kind: "b", text: "待機" }, { kind: "text", text: ": " }, { kind: "code", text: "<b>" }, { kind: "text", text: " のまま" },
+  ]);
 });
