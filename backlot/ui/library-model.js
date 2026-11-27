@@ -85,6 +85,16 @@ export function liveState(projects) {
   return { live: true, text: `制作中: ${p.title || p.project_id} ・ ${where}${more}` };
 }
 
+// 中身の無いフォルダ(project.json もチェックポイントも絵も書き出しも無い)は、動画として数えない。
+// 読み取りに失敗したフォルダ(stage_states が空)は、気づけるように残す。
+export function hasContent(p) {
+  if (!p) return false;
+  if (p.has_pipeline_state || p.created_at || p.poster) return true;
+  if ((p.render_count || 0) > 0 || (p.scene_count || 0) > 0 || (p.completed_count || 0) > 0) return true;
+  const states = p.stage_states || [];
+  return !states.length || states.some((s) => s.status !== "pending");
+}
+
 export function filterSort(projects, filter = "all", sort = "new") {
   let list = projects.slice();
   if (filter === "done") list = list.filter(isDone);

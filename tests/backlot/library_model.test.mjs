@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  buildAsk, filterSort, fmtDate, fmtLength, fmtTotal, inlineParts, isDone, liveState, parseDoc, progress, stageLabel, totals,
+  buildAsk, filterSort, fmtDate, fmtLength, fmtTotal, hasContent, inlineParts, isDone, liveState, parseDoc, progress, stageLabel, totals,
 } from "../../backlot/ui/library-model.js";
 
 const st = (pairs) => pairs.map(([name, status]) => ({ name, status }));
@@ -72,4 +72,16 @@ test("使い方の文書を読み取る(見出し・箇条・番号・表・段�
   assert.deepEqual(inlineParts("**待機**: `<b>` のまま"), [
     { kind: "b", text: "待機" }, { kind: "text", text: ": " }, { kind: "code", text: "<b>" }, { kind: "text", text: " のまま" },
   ]);
+});
+
+test("中身の無いフォルダは棚に出さない", () => {
+  const pending = ["research", "script", "edit"].map((name) => ({ name, status: "pending" }));
+  const empty = { project_id: "empty", pipeline_type: "unknown", has_pipeline_state: false, poster: null,
+    created_at: null, render_count: 0, scene_count: 0, completed_count: 0, stage_states: pending };
+  assert.equal(hasContent(empty), false);
+  assert.equal(hasContent({ ...empty, created_at: "2026-11-26T00:00:00Z" }), true);
+  assert.equal(hasContent({ ...empty, render_count: 1 }), true);
+  assert.equal(hasContent({ ...empty, has_pipeline_state: true }), true);
+  assert.equal(hasContent({ ...empty, stage_states: [] }), true);
+  assert.deepEqual([done, empty, wip].filter(hasContent).map((p) => p.project_id), ["a", "b"]);
 });

@@ -1,7 +1,7 @@
 import { el, getJSON, subscribe, thumbURL } from "/ui/lib.js";
 import {
   EXAMPLES, LENGTHS, MOODS, buildAsk, filterSort, fmtDate, fmtLength, fmtTotal,
-  inlineParts, liveState, madeAt, parseDoc, progress, totals,
+  hasContent, inlineParts, liveState, madeAt, parseDoc, progress, totals,
 } from "/ui/library-model.js";
 
 const app = document.getElementById("app");
@@ -274,7 +274,7 @@ function renderHeader() {
 }
 
 async function render() {
-  projects = await getJSON("/api/projects");
+  projects = (await getJSON("/api/projects")).filter(hasContent);
   renderHeader();
   // Typing in the builder must not be lost to a live refresh.
   if (app.contains(document.activeElement) && document.activeElement.tagName === "INPUT") return;
